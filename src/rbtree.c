@@ -2,6 +2,11 @@
 
 #include <stdlib.h>
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 rbtree *new_rbtree(void) {
   rbtree *p = (rbtree *)calloc(1, sizeof(rbtree));
   // TODO: initialize struct if needed
@@ -98,7 +103,7 @@ void rbtree_insert_fixup(rbtree* t, node_t* new){
 	}
 	node_t* uncle = (parent == g_parent->left)?g_parent->right:g_parent->left;
 	if(uncle->color==RBTREE_RED){
-		g_parent=RBTREE_RED;
+		g_parent->color=RBTREE_RED;
 		uncle->color = parent->color = RBTREE_BLACK;
 		rbtree_insert_fixup(t,g_parent);
 		return;
@@ -132,15 +137,23 @@ node_t *rbtree_insert(rbtree *t, const key_t key) {
 	node_t* newNode = createNode(t, key);
 	node_t* node=t->nil;
 	node_t* current = t->root;
-	while (current != t->nil){
-		node=current;
-		if (current->key < key) current = current->right;
-		else current = current->left;
+	while(current != t->nil){
+		node = current;
+		if(key < current->key){
+			current=current->left;
+		}else{
+			current=current->right;
+		}
 	}
 	newNode->parent = node;
-	if (current == t->nil) t->root = newNode;
-	else if (newNode->key < current->key) current->left = newNode;
-	else current->right = newNode;
+	if (node == t->nil) {
+    	t->root = newNode;
+	}else if(node->key<newNode->key){
+		node->right=newNode;
+	}else{
+		node->left=newNode;
+	}
+
 	// Fix-up function
 	rbtree_insert_fixup(t, newNode);
 	return newNode;
@@ -160,8 +173,9 @@ node_t *rbtree_find(const rbtree *t, const key_t key) {
 
 node_t *rbtree_min(const rbtree *t) {
 	// TODO: implement find
-	node_t* current = t->nil;
+	node_t* current = t->root;
 	while (current!=t->nil){
+		if (current->left==t->nil) return current;
 		current = current->left;
 	}
 	return current->parent;
@@ -169,8 +183,9 @@ node_t *rbtree_min(const rbtree *t) {
 
 node_t *rbtree_max(const rbtree *t) {
 	// TODO: implement find
-	node_t* current = t->nil;
+	node_t* current = t->root;
 	while(current!=t->nil){
+		if(current->right==t->nil) return current;
 		current=current->right;
 	}
 	return current->parent;
@@ -184,4 +199,16 @@ int rbtree_erase(rbtree *t, node_t *p) {
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
 	// TODO: implement to_array
 	return 0;
+}
+
+
+int main(){
+	rbtree *t = new_rbtree();
+	key_t entries[] = {10, 5, 8, 34, 67, 23, 156, 24, 2, 12};
+	const size_t n = sizeof(entries) / sizeof(entries[0]);
+	for(int i =0; i<10;i++){
+		rbtree_insert(t,entries[i]);
+	}
+	printf("%d\n",t->root->key);
+	printf("%d\n",rbtree_min(t)->key);
 }
